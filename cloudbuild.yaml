@@ -1,0 +1,26 @@
+steps:
+  # Step 1: Clone GitHub repo
+  - name: 'gcr.io/cloud-builders/git'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        git clone https://github.com/chandranajith07/Sales_Analytics_repo.git
+        cd repo
+        echo "Repository cloned successfully."
+
+  # Step 2: Copy the Python file to GCS bucket
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Uploading file to GCS bucket..."
+        gsutil -m cp repo/gcs_to_bq_and_bq_operators.py ${_BUCKET_PATH}
+        echo "Upload complete."
+
+substitutions:
+  _BUCKET_PATH: gs://us-central1-composer1-472f769e-bucket/dags
+
+options:
+  logging: CLOUD_LOGGING_ONLY. give 5 line summary for this in one pargraph 
