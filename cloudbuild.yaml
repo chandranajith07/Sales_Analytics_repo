@@ -16,7 +16,7 @@ steps:
       - '-c'
       - |
         echo "Uploading file to GCS bucket..."
-        gsutil -m cp repo/Retail_sales_pipeline.py ${_BUCKET_PATH}
+        gsutil -m cp Sales_Analytics_repo/Retail_sales_pipeline.py ${_BUCKET_PATH}
         echo "Upload complete."
 
 substitutions:
