@@ -42,7 +42,7 @@ def generate_alert_message(**context):
     msg = context['ti'].xcom_pull(task_ids='check_sales_drop', key='alert_message')
     context['ti'].xcom_push(key='pubsub_message', value={"data": {"message": msg}})
 
-# ttey
+# tte
 # swggwdgs
     
 
