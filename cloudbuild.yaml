@@ -6,7 +6,7 @@ steps:
       - '-c'
       - |
         git clone https://github.com/chandranajith07/Sales_Analytics_repo.git
-        cd repo
+        cd Sales_Analytics_repo
         echo "Repository cloned successfully."
 
   # Step 2: Copy the Python file to GCS bucket
