@@ -23,4 +23,4 @@ substitutions:
   _BUCKET_PATH: gs://us-central1-composer1-472f769e-bucket/dags
 
 options:
-  logging: CLOUD_LOGGING_ONLY. give 5 line summary for this in one pargraph 
+  logging: CLOUD_LOGGING_ONLY.
