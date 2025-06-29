@@ -1,10 +1,9 @@
 # airflow/dags/retail_sales_pipeline.py
+
 from airflow import DAG
 from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
 from airflow.providers.google.cloud.operators.gcs import GCSListObjectsOperator
 from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
-
-from airflow.providers.google.cloud.operators.pubsub import PubSubPublishMessageOperator
 from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
 import pendulum
@@ -36,20 +35,26 @@ def detect_sales_drop(threshold, **context):
     return False
 
 
-
-
 def generate_alert_message(**context):
     msg = context['ti'].xcom_pull(task_ids='check_sales_drop', key='alert_message')
     context['ti'].xcom_push(key='pubsub_message', value={"data": {"message": msg}})
 
-# tte
-# swggwdgs
-    
+
+def publish_to_pubsub(**context):
+    from google.cloud import pubsub_v1
+
+    project_id = 'deep-chimera-459105-q6'
+    topic_id = 'sales-alerts'
+    message = context['ti'].xcom_pull(task_ids='generate_alert_message', key='pubsub_message')
+
+    publisher = pubsub_v1.PublisherClient()
+    topic_path = publisher.topic_path(project_id, topic_id)
+
+    data = message['data']['message'].encode("utf-8")
+    publisher.publish(topic_path, data=data)
 
 
-
-
-defaul_args = {
+default_args = {
     'owner': 'retail_team',
     'depends_on_past': False,
     'retries': 1
@@ -57,7 +62,7 @@ defaul_args = {
 
 with DAG(
     dag_id='retail_sales_pipeline',
-    default_args=defaul_args,
+    default_args=default_args,
     schedule_interval='0 1 * * *',  # daily at 1AM
     start_date=days_ago(1),
     catchup=False,
@@ -108,21 +113,16 @@ with DAG(
     )
 
     generate_alert_task = PythonOperator(
-    task_id='generate_alert_message',
-    python_callable=generate_alert_message,
-    provide_context=True,
-)
+        task_id='generate_alert_message',
+        python_callable=generate_alert_message,
+        provide_context=True,
+    )
 
-
-    send_alert = PubSubPublishMessageOperator(
-    task_id='send_alert',
-  
-    topic='projects/deep-chimera-459105-q6/topics/sales-alerts',
-    messages="{{ ti.xcom_pull(task_ids='generate_alert_message', key='pubsub_message') }}",
-    gcp_conn_id='google_cloud_default',
-    trigger_rule='one_success'
-)
-
-
+    send_alert = PythonOperator(
+        task_id='send_alert',
+        python_callable=publish_to_pubsub,
+        provide_context=True,
+        trigger_rule='one_success'
+    )
 
     list_sales_files >> load_to_bq >> run_dbt_transform >> check_sales_drop >> generate_alert_task >> send_alert
