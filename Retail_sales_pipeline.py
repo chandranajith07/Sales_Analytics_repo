@@ -47,11 +47,16 @@ def publish_to_pubsub(**context):
     topic_id = 'sales-alerts'
     message = context['ti'].xcom_pull(task_ids='generate_alert_message', key='pubsub_message')
 
+    if not message:
+        print("No alert message found. Skipping publish.")
+        return
+
     publisher = pubsub_v1.PublisherClient()
     topic_path = publisher.topic_path(project_id, topic_id)
 
     data = message['data']['message'].encode("utf-8")
     publisher.publish(topic_path, data=data)
+
 
 
 default_args = {
